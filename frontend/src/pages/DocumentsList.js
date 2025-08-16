@@ -38,9 +38,10 @@ const DocumentsList = () => {
 
     try {
       await documentService.deleteDocument(documentId);
-      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+      setDocuments(prev => prev.filter(doc => (doc.id || doc._id) !== documentId));
       toast.success('Document deleted successfully');
     } catch (error) {
+      console.error('Delete error:', error);
       toast.error('Failed to delete document');
     }
   };
@@ -172,10 +173,9 @@ const DocumentsList = () => {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredAndSortedDocuments.map((document) => (
-              <Link
-                key={document.id}
-                to={`/documents/${document.id}`}
-                className="card card-hover p-6 block transition-all duration-200 hover:scale-105"
+              <div
+                key={document.id || document._id}
+                className="card card-hover p-6 transition-all duration-200 hover:scale-105"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-2">
@@ -191,7 +191,7 @@ const DocumentsList = () => {
                       </span>
                     )}
                     <button
-                      onClick={(e) => handleDelete(document.id, e)}
+                      onClick={(e) => handleDelete(document.id || document._id, e)}
                       className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                       title="Delete document"
                     >
@@ -230,13 +230,16 @@ const DocumentsList = () => {
                   </div>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between">
+                <Link
+                  to={`/documents/${document.id || document._id}`}
+                  className="mt-4 flex items-center justify-between p-2 -m-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
                   <span className="text-sm text-primary-600 dark:text-primary-400 font-medium">
                     View Details
                   </span>
                   <Eye className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-                </div>
-              </Link>
+                </Link>
+              </div>
             ))}
           </div>
         )}

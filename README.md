@@ -69,6 +69,30 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
+### Tesseract OCR Installation
+
+**Windows:**
+1. Download Tesseract from: https://github.com/UB-Mannheim/tesseract/wiki
+2. Install to default location: `C:\Program Files\Tesseract-OCR\`
+3. Add to PATH: `C:\Program Files\Tesseract-OCR\`
+4. Restart your terminal/IDE after installation
+
+**Linux:**
+```bash
+sudo apt-get update
+sudo apt-get install tesseract-ocr tesseract-ocr-eng
+```
+
+**macOS:**
+```bash
+brew install tesseract
+```
+
+**Verify Installation:**
+```bash
+tesseract --version
+```
+
 ### Frontend Development
 
 ```bash

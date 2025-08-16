@@ -3,14 +3,14 @@ from typing import Optional
 
 
 class Settings(BaseSettings):
-    mongodb_url: str = "mongodb://mongodb:27017"
-    database_name: str = "handwriting_ocr"
+    mongo_uri: str = "mongodb://localhost:27017/handwriting_ocr_db"
     jwt_secret_key: str = "your-secret-key-change-in-production"
-    jwt_algorithm: str = "HS256"
-    jwt_expiration_hours: int = 24
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
     
     class Config:
         env_file = ".env"
+        case_sensitive = False
 
 
 settings = Settings()

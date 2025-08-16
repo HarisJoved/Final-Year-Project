@@ -1,11 +1,12 @@
 from datetime import datetime
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form
 from ..database import get_database
-from ..models import DocumentResponse, DocumentCreate, DocumentUpdate, UserResponse, OCRResponse
+from ..models import DocumentResponse, DocumentCreate, DocumentUpdate, UserResponse, OCRResponse, PreprocessingOptions
 from ..auth import get_current_user
 from ..services.ocr_service import OCRService
 from bson import ObjectId
+import json
 
 
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -14,6 +15,7 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 @router.post("/upload-image", response_model=OCRResponse)
 async def upload_and_process_image(
     file: UploadFile = File(...),
+    preprocessing_options: str = Form(None),
     current_user: UserResponse = Depends(get_current_user)
 ):
     # Validate file type
@@ -26,10 +28,21 @@ async def upload_and_process_image(
     # Read file contents
     image_bytes = await file.read()
     
-    # Process image with OCR
-    extracted_text = await OCRService.extract_text_from_image(image_bytes)
+    # Parse preprocessing options
+    options = None
+    if preprocessing_options:
+        try:
+            options = json.loads(preprocessing_options)
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid preprocessing options format"
+            )
     
-    return OCRResponse(extracted_text=extracted_text)
+    # Process image with OCR
+    result = await OCRService.extract_text_from_image(image_bytes, options)
+    
+    return OCRResponse(**result)
 
 
 @router.post("/", response_model=DocumentResponse)

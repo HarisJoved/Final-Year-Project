@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, FileText, Image, X, Save, Eye } from 'lucide-react';
+import { Upload, FileText, Image, X, Save, Eye, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { documentService } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Layout from '../components/Layout';
+import ImagePreprocessor from '../components/ImagePreprocessor';
 
 const UploadDocument = () => {
   const [file, setFile] = useState(null);
@@ -13,7 +14,8 @@ const UploadDocument = () => {
   const [correctedText, setCorrectedText] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [step, setStep] = useState('upload'); // 'upload', 'preview', 'edit'
+  const [step, setStep] = useState('upload'); // 'upload', 'preview', 'preprocess', 'edit'
+  const [preprocessingOptions, setPreprocessingOptions] = useState({});
   
   const navigate = useNavigate();
 
@@ -63,7 +65,7 @@ const UploadDocument = () => {
 
     setLoading(true);
     try {
-      const result = await documentService.uploadImage(file);
+      const result = await documentService.uploadImage(file, preprocessingOptions);
       setExtractedText(result.extracted_text);
       setCorrectedText(result.extracted_text);
       setStep('edit');
@@ -151,7 +153,71 @@ const UploadDocument = () => {
         />
       </div>
 
-      <div className="flex justify-center">
+      <div className="flex justify-center space-x-4">
+        <button
+          onClick={() => setStep('preprocess')}
+          className="btn-secondary flex items-center space-x-2"
+        >
+          <Settings className="w-4 h-4" />
+          <span>Preprocess Image</span>
+        </button>
+        <button
+          onClick={processImage}
+          disabled={loading}
+          className="btn-primary flex items-center space-x-2"
+        >
+          {loading ? (
+            <>
+              <LoadingSpinner size="sm" />
+              <span>Processing...</span>
+            </>
+          ) : (
+            <>
+              <Eye className="w-4 h-4" />
+              <span>Extract Text</span>
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderPreprocessStep = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          Preprocess Image
+        </h2>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setStep('preview')}
+            className="btn-secondary flex items-center space-x-2"
+          >
+            <X className="w-4 h-4" />
+            <span>Back</span>
+          </button>
+          <button
+            onClick={resetUpload}
+            className="btn-secondary flex items-center space-x-2"
+          >
+            <X className="w-4 h-4" />
+            <span>Change Image</span>
+          </button>
+        </div>
+      </div>
+
+      <ImagePreprocessor
+        image={preview}
+        onPreprocessingChange={setPreprocessingOptions}
+      />
+
+      <div className="flex justify-center space-x-4">
+        <button
+          onClick={() => setStep('preview')}
+          className="btn-secondary"
+        >
+          Back to Preview
+        </button>
         <button
           onClick={processImage}
           disabled={loading}
@@ -277,12 +343,12 @@ const UploadDocument = () => {
             <div className="flex items-center space-x-4">
               <div className={`flex items-center space-x-2 ${
                 step === 'upload' ? 'text-primary-600 dark:text-primary-400' : 
-                step === 'preview' || step === 'edit' ? 'text-green-600 dark:text-green-400' : 
+                step === 'preview' || step === 'preprocess' || step === 'edit' ? 'text-green-600 dark:text-green-400' : 
                 'text-gray-400 dark:text-gray-500'
               }`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                   step === 'upload' ? 'bg-primary-100 dark:bg-primary-900' :
-                  step === 'preview' || step === 'edit' ? 'bg-green-100 dark:bg-green-900' :
+                  step === 'preview' || step === 'preprocess' || step === 'edit' ? 'bg-green-100 dark:bg-green-900' :
                   'bg-gray-100 dark:bg-gray-800'
                 }`}>
                   1
@@ -294,17 +360,34 @@ const UploadDocument = () => {
               
               <div className={`flex items-center space-x-2 ${
                 step === 'preview' ? 'text-primary-600 dark:text-primary-400' : 
-                step === 'edit' ? 'text-green-600 dark:text-green-400' : 
+                step === 'preprocess' || step === 'edit' ? 'text-green-600 dark:text-green-400' : 
                 'text-gray-400 dark:text-gray-500'
               }`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                   step === 'preview' ? 'bg-primary-100 dark:bg-primary-900' :
-                  step === 'edit' ? 'bg-green-100 dark:bg-green-900' :
+                  step === 'preprocess' || step === 'edit' ? 'bg-green-100 dark:bg-green-900' :
                   'bg-gray-100 dark:bg-gray-800'
                 }`}>
                   2
                 </div>
                 <span className="text-sm font-medium">Preview</span>
+              </div>
+              
+              <div className="w-8 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+              
+              <div className={`flex items-center space-x-2 ${
+                step === 'preprocess' ? 'text-primary-600 dark:text-primary-400' : 
+                step === 'edit' ? 'text-green-600 dark:text-green-400' : 
+                'text-gray-400 dark:text-gray-500'
+              }`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  step === 'preprocess' ? 'bg-primary-100 dark:bg-primary-900' :
+                  step === 'edit' ? 'bg-green-100 dark:bg-green-900' :
+                  'bg-gray-100 dark:bg-gray-800'
+                }`}>
+                  3
+                </div>
+                <span className="text-sm font-medium">Preprocess</span>
               </div>
               
               <div className="w-8 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
@@ -317,7 +400,7 @@ const UploadDocument = () => {
                   step === 'edit' ? 'bg-primary-100 dark:bg-primary-900' :
                   'bg-gray-100 dark:bg-gray-800'
                 }`}>
-                  3
+                  4
                 </div>
                 <span className="text-sm font-medium">Edit & Save</span>
               </div>
@@ -327,6 +410,7 @@ const UploadDocument = () => {
           {/* Step Content */}
           {step === 'upload' && renderUploadStep()}
           {step === 'preview' && renderPreviewStep()}
+          {step === 'preprocess' && renderPreprocessStep()}
           {step === 'edit' && renderEditStep()}
         </div>
       </div>

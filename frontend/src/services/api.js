@@ -40,9 +40,13 @@ api.interceptors.response.use(
 
 // Document service
 export const documentService = {
-  uploadImage: async (file) => {
+  uploadImage: async (file, preprocessingOptions = {}) => {
     const formData = new FormData();
     formData.append('file', file);
+    
+    if (Object.keys(preprocessingOptions).length > 0) {
+      formData.append('preprocessing_options', JSON.stringify(preprocessingOptions));
+    }
     
     const response = await api.post('/documents/upload-image', formData, {
       headers: {

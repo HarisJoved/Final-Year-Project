@@ -16,8 +16,8 @@ async def get_database():
 
 async def connect_to_mongo():
     """Create database connection"""
-    db.client = AsyncIOMotorClient(settings.mongodb_url)
-    db.database = db.client[settings.database_name]
+    db.client = AsyncIOMotorClient(settings.mongo_uri)
+    db.database = db.client.get_database()
     
     # Create indexes
     await db.database.users.create_index("email", unique=True)
